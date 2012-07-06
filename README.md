@@ -1,7 +1,7 @@
-ofxJitterVideoSender
+ofxJitterNetworkSender
 ====================
 
-![Screenshot](https://github.com/bakercp/ofxJitterVideoSender/raw/master/screen.png)
+![Screenshot](https://github.com/bakercp/ofxJitterNetworkSender/raw/master/screen.png)
 
 License
 -------
