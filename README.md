@@ -1,6 +1,11 @@
 ofxJitterVideoSender
 ====================
 
+![Screenshot](https://github.com/bakercp/ofxJitterVideoSender/raw/master/screen.png)
+
+License
+-------
+
 Copyright (c) 2011, 2012 Christopher Baker <http://christopherbaker.net>
 
 MIT License.
