@@ -27,8 +27,8 @@ void testApp::setup(){
 void testApp::update(){
 	
     // prepare our video frames
-    fingerMovie.idleMovie();
-    vidGrabber.grabFrame();
+    fingerMovie.update();
+    vidGrabber.update();
     
     if(sender.isConnected()){
         if(useGrabber) {
@@ -97,19 +97,3 @@ void testApp::draw(){
 void testApp::keyPressed(int key){ 
 	useGrabber = !useGrabber;
 }
-//--------------------------------------------------------------
-void testApp::keyReleased(int key){}
-//--------------------------------------------------------------
-void testApp::mouseMoved(int x, int y ){}
-//--------------------------------------------------------------
-void testApp::mouseDragged(int x, int y, int button){}
-//--------------------------------------------------------------
-void testApp::mousePressed(int x, int y, int button){}
-//--------------------------------------------------------------
-void testApp::mouseReleased(int x, int y, int button){}
-//--------------------------------------------------------------
-void testApp::windowResized(int w, int h) {}
-//--------------------------------------------------------------
-void testApp::dragEvent(ofDragInfo dragInfo) {}
-//--------------------------------------------------------------
-void testApp::gotMessage(ofMessage msg) {}
