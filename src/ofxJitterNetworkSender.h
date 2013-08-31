@@ -176,7 +176,11 @@ public:
 protected: 
     
     void readResponse();
-    void makeMatrixHeader(int planecount, int typeSize, int type, int *dim, int dimcount);
+    void makeMatrixHeader(int planecount,
+                          int typeSize,
+                          int type,
+                          int *dim,
+                          int dimcount);
     
 	double lastSent;
     
