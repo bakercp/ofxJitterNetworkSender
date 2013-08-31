@@ -23,11 +23,30 @@
 // =============================================================================
 
 
-#include "ofApp.h"
+#pragma once
 
 
-int main()
+#include "ofMain.h"
+#include "ofxJitterNetworkSender.h"
+
+
+class ofApp: public ofBaseApp
 {
-	ofSetupOpenGL(650,300, OF_WINDOW);
-	ofRunApp(new ofApp());
-}
+public:
+    void setup();
+    void update();
+    void draw();
+    
+    void keyPressed(int key);
+    
+	bool useGrabber;
+
+    ofVideoPlayer fingerMovie;
+    ofVideoGrabber vidGrabber;
+    
+    ofxJitterNetworkSender sender;
+
+    float counter;
+    int connectTime;
+	
+};

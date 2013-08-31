@@ -1,7 +1,34 @@
+// =============================================================================
+//
+// Copyright (c) 2009-2013 Christopher Baker <http://christopherbaker.net>
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+//
+// =============================================================================
+
+
 #pragma once
 
-#include "ofMain.h"
+
 #include "ofxNetwork.h"
+#include "ofPixels.h"
+
 
 // http://cycling74.com/sdk/MaxSDK-6.0.4/html/chapter_jit_networking.html
 // https://github.com/Cycling74/max6-sdk
@@ -136,147 +163,20 @@ typedef struct _jit_net_packet_message
 //#define SETFLOAT(ap, x) ((ap)->a_type = A_FLOAT, (ap)->a_w.w_float = (x))
 //#define SETDOLLAR(ap, x) ((ap)->a_type = A_DOLLAR, (ap)->a_w.w_long = (x))
 
-class ofxJitterNetworkSender : public ofxTCPClient {
+class ofxJitterNetworkSender: public ofxTCPClient
+{
 public:
+    ofxJitterNetworkSender();
+    virtual ~ofxJitterNetworkSender();
 
-    void sendFrame(const ofPixelsRef pixels) {
-        int planecount = pixels.getNumChannels();
-        int dimcount = 2; // only sending 2d matrices from of
-        int dim[dimcount];
-        dim[0]       = pixels.getWidth();
-        dim[1]       = pixels.getHeight();
-        int typeSize = pixels.getBytesPerChannel();
-        int type     = JIT_MATRIX_TYPE_CHAR;
-
-        makeMatrixHeader(planecount, typeSize, type, dim, dimcount);
-
-        char *matrix = (char*)pixels.getPixels();
-        
-        //////SEND ONE MATRIX
-        sendRawBytes((char *)(&m_chunkHeader), sizeof(t_jit_net_packet_header));
-        sendRawBytes((char *)(&m_matrixHeader), sizeof(t_jit_net_packet_matrix));
-        
-        int packSize = SWAP32(m_matrixHeader.dimstride[SWAP32(m_matrixHeader.dimcount)-1])
-                    * SWAP32(m_matrixHeader.dim[SWAP32(m_matrixHeader.dimcount)-1]);
-
-        sendRawBytes(matrix, packSize);
-
-    }
-    
-    
-    void sendText(const string& txt) {
-        m_messageHeader.id = SWAP32(JIT_MESSAGE_PACKET_ID);
-        m_messageHeader.size = SWAP32(sizeof(long) + // size
-                                      sizeof(long) + // ac
-                                      sizeof(char) + // type
-                                      sizeof(char)*txt.length() + // number
-                                      sizeof(char)); // null terminator
-        
-        sendRawBytes((char *)&m_messageHeader.id, sizeof(long));
-        sendRawBytes((char *)&m_messageHeader.size, sizeof(long));
-        
-        // the packet
-        long messageSizeBytes = m_messageHeader.size; //	32-bit integer that contains the size of the serialized message in bytes. 
-        long ac = SWAP32(0);      //    Following that another 32-bit integer gives the argument count for the atoms. 
-        /// Following that comes the message atoms themselves, starting with the leading symbol if it exists. 
-        //  Each atom is represented in memory first with a char that indicates what type of atom it is:
-        //		's' for symbol, 'l' for long, and 'f' for float. 
-        //		For long and float atoms, the next 4 bytes contain the value of the atom; 
-        //		for symbol atoms a null terminated character string follows. 
-        
-        
-        char atomType = 's'; //'s' for symbol, 'l' for long, and 'f' for float. 
-        const char *cp = txt.c_str(); // seriously
-        char nullTerm = '\0';
-        sendRawBytes((char *)&messageSizeBytes, sizeof(long));
-        sendRawBytes((char *)&ac, sizeof(long));
-        sendRawBytes((char *)&atomType, sizeof(char));
-        sendRawBytes((char *)cp, txt.length()*sizeof(char));
-        sendRawBytes((char *)&nullTerm, sizeof(char));
-        
-        //readResponse();
-    }
-    
-    double getLastSent() {
-        return lastSent;
-    }
+    void sendFrame(const ofPixelsRef pixels);
+    void sendText(const string& txt);
+    double getLastSent() const;
 
 protected: 
     
-    void readResponse() {
-        // TODO read latency data here.
-        
-        
-        char buf[MAXDATASIZE]; 
-        int numBytes = receiveRawBytes(buf, MAXDATASIZE-1);
-        if (numBytes == -1) {
-            // printf("recv error\n");
-            // skip it, there's nothing there
-        } else {
-            buf[numBytes] = '\0'; // end it
-            
-            m_latencyPacket.id                      = ((t_jit_net_packet_latency *)buf)->id; // cast it to get the id
-            m_latencyPacket.client_time_original    = ((t_jit_net_packet_latency *)buf)->client_time_original;
-            m_latencyPacket.server_time_before_data = ((t_jit_net_packet_latency *)buf)->server_time_before_data;
-            m_latencyPacket.server_time_after_data  = ((t_jit_net_packet_latency *)buf)->server_time_after_data;
-            
-//printf("id: %d\n", (m_latencyPacket.id));
-//printf("client time original %f\n",m_latencyPacket.client_time_original);
-//printf("before Data %fl\n",m_latencyPacket.server_time_before_data);
-//printf("after Data %f\n",m_latencyPacket.server_time_after_data);
-//printf("diff=%f\n\n",m_latencyPacket.server_time_after_data - m_latencyPacket.server_time_before_data);
-            
-            // cout << buf << endl;
-            
-            // if(lastSent >= m_latencyPacket.client_time_original) {
-            //  printf("GTOE => last sent=%f and client_time_original=%f\n",lastSent,m_latencyPacket.client_time_original);	
-            // } else {
-            //  printf("NNNWWW => last sent=%f and client_time_original=%f\n",lastSent,m_latencyPacket.client_time_original);	
-            // }
-        }
-    }
-
-    void makeMatrixHeader(int planecount, int typeSize, int type, int *dim, int dimcount) {
-        long i, j, k;
-        
-        m_chunkHeader.id = SWAP32(JIT_MATRIX_PACKET_ID);
-        m_chunkHeader.size = sizeof(t_jit_net_packet_matrix);
-        
-        m_matrixHeader.id = JIT_MATRIX_PACKET_ID;
-        m_matrixHeader.size = SWAP32(sizeof(t_jit_net_packet_matrix));
-        m_matrixHeader.planecount = SWAP32(planecount);
-        m_matrixHeader.type = SWAP32(type);
-        m_matrixHeader.dimcount = SWAP32(dimcount);
-        
-        for(i=0; i < dimcount; i++) {
-            m_matrixHeader.dim[i] = SWAP32(dim[i]);
-        }
-        
-        while(i < JIT_MATRIX_MAX_DIMCOUNT) {
-            m_matrixHeader.dim[i] = SWAP32(0); // <-- in the jitter one, they seem to just copy the dim through ...
-            i++;
-        }
-        
-        //special case for first value
-        m_matrixHeader.dimstride[0] = SWAP32(typeSize * planecount);
-        
-        for(i=1; i <= dimcount; i++) {
-            m_matrixHeader.dimstride[i] = SWAP32(dim[i-1]*SWAP32(m_matrixHeader.dimstride[i-1])); // watch out for these .. they need to come back ...
-        }
-        
-        while(i < JIT_MATRIX_MAX_DIMCOUNT) {
-            m_matrixHeader.dimstride[i] = SWAP32(0);
-            i++;
-        }
-        
-        m_matrixHeader.datasize = SWAP32(SWAP32(m_matrixHeader.dimstride[dimcount-1])*SWAP32(m_matrixHeader.dim[dimcount-1]));
-        m_matrixHeader.time = ofGetElapsedTimef();
-
-        // just to keep track
-        lastSent = m_matrixHeader.time;
-
-    }
-
+    void readResponse();
+    void makeMatrixHeader(int planecount, int typeSize, int type, int *dim, int dimcount);
     
 	double lastSent;
     
@@ -286,7 +186,3 @@ protected:
     t_jit_net_packet_header  m_messageHeader;
 
 };
-
-
-
-
