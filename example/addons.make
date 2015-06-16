@@ -1,2 +1,1 @@
 ofxJitterNetworkSender
-ofxNetwork

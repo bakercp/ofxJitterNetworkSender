@@ -4,3 +4,6 @@ meta:
 	ADDON_AUTHOR = bakercp
 	ADDON_TAGS = "video" "network" "maxmsp" "jitter"
 	ADDON_URL = http://github.com/bakercp/ofxJitterNetworkSender
+
+common:
+	ADDON_DEPENDENCIES = ofxNetwork
