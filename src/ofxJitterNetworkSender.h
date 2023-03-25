@@ -41,9 +41,12 @@
 #define	MATRIX_PLANES	4
 #define	MATRIX_BYTES	MATRIX_PLANES*MATRIX_DIM*MATRIX_DIM
 
-#define SWAP16(x) ((short)(((((unsigned short)(x))>>8)&0x00ff)+((((unsigned short)(x))<<8)&0xff00)))
-#define SWAP32(x) ((long)(((((unsigned long)(x))>>24L)&0x000000ff)+((((unsigned long)(x))>>8L)&0x0000ff00)+ \
-((((unsigned long)(x))<<24L)&0xff000000)+((((unsigned long)(x))<<8L)&0x00ff0000)))
+#define SWAP16(x) ((short)(((((unsigned short)(x))>>8)&0x00ff) \
+                          +((((unsigned short)(x))<<8)&0xff00)))
+#define SWAP32(x) ((int32_t)(((((uint32_t)(x))>>24L)&0x000000ff)\
+                           +((((uint32_t)(x))>>8L)&0x0000ff00)\
+                           +((((uint32_t)(x))<<24L)&0xff000000)\
+                           +((((uint32_t)(x))<<8L)&0x00ff0000)))
 
 #define JIT_MATRIX_MAX_DIMCOUNT		32 			///< maximum dimension count
 #define JIT_MATRIX_MAX_PLANECOUNT	32 			///< maximum plane count
@@ -59,25 +62,25 @@
 
 //This chunk header could be represented in C by the following struct:
 typedef struct _jit_net_packet_header {
-    long id;
-    long size; //size of packet to come
+    int32_t id;
+    int32_t size; //size of packet to come
 } t_jit_net_packet_header;
 
 typedef struct _jit_net_packet_matrix {
-    long   id;
-    long   size;
-    long   planecount;
-    long   type;         //0=char,1=long,2=float32,3=float64
-    long   dimcount;
-    long   dim[JIT_MATRIX_MAX_DIMCOUNT];
-    long   dimstride[JIT_MATRIX_MAX_DIMCOUNT];
-    long   datasize;
+    int32_t   id;
+    int32_t   size;
+    int32_t   planecount;
+    int32_t   type;         //0=char,1=long,2=float32,3=float64
+    int32_t   dimcount;
+    int32_t   dim[JIT_MATRIX_MAX_DIMCOUNT];
+    int32_t   dimstride[JIT_MATRIX_MAX_DIMCOUNT];
+    int32_t   datasize;
     double   time;
     
 } t_jit_net_packet_matrix;
 
 typedef struct _jit_net_packet_latency {
-    long id;
+    int32_t id;
     double client_time_original;
     double server_time_before_data; 
     double server_time_after_data;
@@ -169,13 +172,13 @@ public:
     ofxJitterNetworkSender();
     virtual ~ofxJitterNetworkSender();
 
-    void sendFrame(const ofPixelsRef pixels);
-    void sendText(const string& txt);
+    void sendFrame(const ofPixels &pixels);
+    void sendText(const std::string& txt);
     double getLastSent() const;
 
-protected: 
     
     void readResponse();
+protected:
     void makeMatrixHeader(int planecount,
                           int typeSize,
                           int type,
