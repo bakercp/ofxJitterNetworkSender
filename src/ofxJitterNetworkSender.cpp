@@ -12,33 +12,33 @@ ofxJitterNetworkSender::~ofxJitterNetworkSender()
 }
 
 //------------------------------------------------------------------------------
-void ofxJitterNetworkSender::sendFrame(const ofPixelsRef pixels)
+void ofxJitterNetworkSender::sendFrame(const ofPixels &pixels)
 {
-    int planecount = pixels.getNumChannels();
-    int dimcount = 2; // only sending 2d matrices from of
-    int dim[dimcount];
-    dim[0]       = pixels.getWidth();
-    dim[1]       = pixels.getHeight();
-    int typeSize = pixels.getBytesPerChannel();
+    int planecount = (int)pixels.getNumChannels();
+    constexpr int dimcount = 2; // only sending 2d matrices from of
+    int dim[2];
+    dim[0]       = (int)pixels.getWidth();
+    dim[1]       = (int)pixels.getHeight();
+    int typeSize = (int)pixels.getBytesPerChannel();
     int type     = JIT_MATRIX_TYPE_CHAR;
 
     makeMatrixHeader(planecount, typeSize, type, dim, dimcount);
 
-    char *matrix = (char*)pixels.getPixels();
+    char *matrix = (char*)pixels.getData();
     
     //////SEND ONE MATRIX
     sendRawBytes((char *)(&m_chunkHeader), sizeof(t_jit_net_packet_header));
     sendRawBytes((char *)(&m_matrixHeader), sizeof(t_jit_net_packet_matrix));
     
-    int packSize = SWAP32(m_matrixHeader.dimstride[SWAP32(m_matrixHeader.dimcount)-1])
-                * SWAP32(m_matrixHeader.dim[SWAP32(m_matrixHeader.dimcount)-1]);
+    int packSize = (int)SWAP32(m_matrixHeader.dimstride[SWAP32(m_matrixHeader.dimcount)-1])
+                 * (int)SWAP32(m_matrixHeader.dim[SWAP32(m_matrixHeader.dimcount)-1]);
 
     sendRawBytes(matrix, packSize);
 
 }
 
 //------------------------------------------------------------------------------
-void ofxJitterNetworkSender::sendText(const string& txt) {
+void ofxJitterNetworkSender::sendText(const std::string& txt) {
     m_messageHeader.id = SWAP32(JIT_MESSAGE_PACKET_ID);
     m_messageHeader.size = SWAP32(sizeof(long) + // size
                                   sizeof(long) + // ac
@@ -65,7 +65,7 @@ void ofxJitterNetworkSender::sendText(const string& txt) {
     sendRawBytes((char *)&messageSizeBytes, sizeof(long));
     sendRawBytes((char *)&ac, sizeof(long));
     sendRawBytes((char *)&atomType, sizeof(char));
-    sendRawBytes((char *)cp, txt.length()*sizeof(char));
+    sendRawBytes((char *)cp, (int)txt.length() * (int)sizeof(char));
     sendRawBytes((char *)&nullTerm, sizeof(char));
     
     //readResponse();
